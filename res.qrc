@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/image">
+        <file>resource/folder_sync_gui.png</file>
+    </qresource>
+</RCC>
