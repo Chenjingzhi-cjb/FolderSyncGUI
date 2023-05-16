@@ -33,6 +33,8 @@ private slots:
 
     void on_update_pushButton_clicked();
 
+    void slotTextBrowserPrint(QString info);
+
 private:
     Ui::MainWindow *ui;
 
@@ -41,6 +43,8 @@ private:
     QString m_src_path{};
 
     QStringList m_dst_paths{};
+
+    FolderSync m_folder_sync;
 };
 
 

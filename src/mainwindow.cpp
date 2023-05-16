@@ -9,7 +9,9 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    setWindowIcon(QIcon(":/image/resource/folder_sync_gui.png"));
+    setWindowIcon(QIcon(":/image/Resource/folder_sync_gui.ico"));
+
+    connect(&m_folder_sync, &FolderSync::signalTextBrowserPrint, this, &MainWindow::slotTextBrowserPrint);
 
     fs->setOption(QFileDialog::DontUseNativeDialog,true);
     //支持多选
@@ -31,7 +33,6 @@ MainWindow::~MainWindow()
     delete fs;
 }
 
-
 void MainWindow::on_src_pushButton_clicked()
 {
     m_src_path = QFileDialog::getExistingDirectory(this, "Select source directory", "", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
@@ -41,7 +42,6 @@ void MainWindow::on_src_pushButton_clicked()
         ui->src_lineEdit->setText(src_path_display);
     }
 }
-
 
 void MainWindow::on_dst_pushButton_clicked()
 {
@@ -64,7 +64,6 @@ void MainWindow::on_dst_pushButton_clicked()
     }
 }
 
-
 void MainWindow::on_check_pushButton_clicked()
 {
     if ((m_src_path != "") && (!m_dst_paths.isEmpty())) {
@@ -73,11 +72,12 @@ void MainWindow::on_check_pushButton_clicked()
         for (auto &i : m_dst_paths) {
             dst_paths.emplace_back(i.toStdString());
         }
-        FolderSync folder_sync(src_path, dst_paths, ui->output_textBrowser);
-        folder_sync.findDiff();
+        m_folder_sync.setPath(src_path, dst_paths);
+
+        std::thread find_diff_Thread(&FolderSync::findDiff, &m_folder_sync);
+        find_diff_Thread.detach();
     }
 }
-
 
 void MainWindow::on_update_pushButton_clicked()
 {
@@ -87,8 +87,14 @@ void MainWindow::on_update_pushButton_clicked()
         for (auto &i : m_dst_paths) {
             dst_paths.emplace_back(i.toStdString());
         }
-        FolderSync folder_sync(src_path, dst_paths, ui->output_textBrowser);
-        folder_sync.update();
+        m_folder_sync.setPath(src_path, dst_paths);
+
+        std::thread update_Thread(&FolderSync::update, &m_folder_sync);
+        update_Thread.detach();
     }
+}
+
+void MainWindow::slotTextBrowserPrint(QString info) {
+    ui->output_textBrowser->append(info);
 }
 

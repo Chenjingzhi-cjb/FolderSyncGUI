@@ -11,6 +11,8 @@
 #include <unordered_map>
 #include <algorithm>
 #include <windows.h>
+#include <thread>
+#include <QObject>
 #include <QTextBrowser>
 #include <QString>
 
@@ -47,19 +49,23 @@ private:
 };
 
 
-class FolderSync {
+class FolderSync : public QObject {
+    Q_OBJECT
+
 public:
-    FolderSync(std::string src_path, std::vector<std::string> dst_paths, QTextBrowser *text_browser, bool W = false)
-            : m_src_path(std::move(src_path)),
-              m_dst_paths(std::move(dst_paths)),
-              m_text_browser(text_browser),
-              m_W(W) {
-        initSrcFolder();
-    }
+    FolderSync() = default;
 
     ~FolderSync() = default;
 
 public:
+    void setPath(std::string src_path, std::vector<std::string> dst_paths, bool W = false) {
+        m_src_path = std::move(src_path);
+        m_dst_paths = std::move(dst_paths);
+        m_W = W;
+
+        initSrcFolder();
+    }
+
     /**
      * @brief 查找 源文件夹 与 目标文件夹 的差异，并打印相关信息，不修改文件夹
      *
@@ -68,10 +74,15 @@ public:
     void findDiff() {
         for (const auto &dst_path : m_dst_paths) {
             initDstFolder(dst_path);
-            m_text_browser->append(QString::fromStdString("-------- dst path: " + dst_path + " --------"));
+
+            emit signalTextBrowserPrint(QString::fromStdString("-------- dst path: " + dst_path + " --------"));
+
             findFilesDiff(m_src_folder, m_dst_folder, false);
-            m_text_browser->append(QString::fromStdString("---------------- check succeeded ----------------"));
+
+            emit signalTextBrowserPrint(QString::fromStdString("---------------- check succeeded ----------------\n"));
         }
+
+        emit signalTextBrowserPrint(QString::fromStdString("Find diff completed!\n"));
     }
 
     /**
@@ -82,12 +93,19 @@ public:
     void update() {
         for (const auto &dst_path : m_dst_paths) {
             initDstFolder(dst_path);
-            m_text_browser->append(QString::fromStdString("-------- dst path: " + dst_path + " --------"));
-            m_text_browser->append(QString::fromStdString("updating..."));
+
+            emit signalTextBrowserPrint(QString::fromStdString("-------- dst path: " + dst_path + " --------"));
+
             findFilesDiff(m_src_folder, m_dst_folder, true);
-            m_text_browser->append(QString::fromStdString("---------------- update succeeded ----------------"));
+
+            emit signalTextBrowserPrint(QString::fromStdString("---------------- update succeeded ----------------\n"));
         }
+
+        emit signalTextBrowserPrint(QString::fromStdString("Update completed!\n"));
     }
+
+signals:
+    void signalTextBrowserPrint(QString info);
 
 protected:
     /**
@@ -101,7 +119,7 @@ protected:
 
         m_src_folder = FolderObj(m_src_path);
 
-        m_text_browser->append(QString::fromStdString("-> src path: " + m_src_path));
+        emit signalTextBrowserPrint(QString::fromStdString("-> src path: " + m_src_path + "\n"));
 
         if (m_W) {
             buildFolderTreeW(m_src_folder);
@@ -120,8 +138,8 @@ protected:
         if (dst_path.c_str()[-1] != '\\') dst_path.append("\\");
 
         if (m_src_path == dst_path) {
-            m_text_browser->append(QString::fromStdString("initFolderSync() Error: The source and destination addresses must be different!"));
-            m_text_browser->append(QString::fromStdString("    error folder: " + dst_path));
+            emit signalTextBrowserPrint(QString::fromStdString("initFolderSync() Error: The source and destination addresses must be different!"));
+            emit signalTextBrowserPrint(QString::fromStdString("    error folder: " + dst_path + "\n"));
         }
 
         m_dst_folder = FolderObj(dst_path);
@@ -141,7 +159,7 @@ protected:
      */
     static void buildFolderTree(FolderObj &folder) {
         long file_handle;  // 文件句柄
-        struct _finddata_t file_info{};  // 文件信息
+        struct _finddata_t file_info;  // 文件信息
 
         std::string folder_path = folder.getPath();
         std::string p;
@@ -225,18 +243,19 @@ protected:
 
             if (is_operate) {  // update()
                 system(("del \"" + dst_folder.getPath() + dst_file.first + "\"").c_str());
+                emit signalTextBrowserPrint(QString::fromStdString("Deleted file: " + dst_folder.getPath() + dst_file.first));
             } else {  // findDiff()
-               m_text_browser->append(QString::fromStdString("Old file: " + dst_folder.getPath() + dst_file.first));
+               emit signalTextBrowserPrint(QString::fromStdString("Old file: " + dst_folder.getPath() + dst_file.first));
             }
         }
 
         // 2. 查找新文件
         for (auto &i : _src_files) {
             if (is_operate) {  // update()
-                system(("copy \"" + src_folder.getPath() + i.first + "\" \"" + dst_folder.getPath() + i.first +
-                        "\"").c_str());
+                system(("copy \"" + src_folder.getPath() + i.first + "\" \"" + dst_folder.getPath() + i.first + "\"").c_str());
+                emit signalTextBrowserPrint(QString::fromStdString("Added file: " + dst_folder.getPath() + i.first));
             } else {  // findDiff()
-                m_text_browser->append(QString::fromStdString("New file: " + src_folder.getPath() + i.first));
+                emit signalTextBrowserPrint(QString::fromStdString("New file: " + src_folder.getPath() + i.first));
             }
         }
         _src_files.clear();
@@ -288,8 +307,9 @@ protected:
             system(("md \"" + dst_folder.getPath() + src_iter->getName() + "\"").c_str());
             system(("xcopy \"" + src_folder.getPath() + src_iter->getName() + "\" \"" + dst_folder.getPath() +
                     src_iter->getName() + "\"" + "/S /E /Y").c_str());
+            emit signalTextBrowserPrint(QString::fromStdString("Added folder: " + dst_folder.getPath() + src_iter->getName() + "\\"));
         } else {  // findDiff()
-            m_text_browser->append(QString::fromStdString("New folder: " + src_iter->getPath()));
+            emit signalTextBrowserPrint(QString::fromStdString("New folder: " + src_iter->getPath()));
         }
     }
 
@@ -306,8 +326,9 @@ protected:
     inline void oldFolder(FolderObj &dst_folder, std::vector<FolderObj>::iterator &dst_iter, bool is_operate) {
         if (is_operate) {  // update()
             system(("rd /s /q \"" + dst_folder.getPath() + dst_iter->getName() + "\"").c_str());
+            emit signalTextBrowserPrint(QString::fromStdString("Deleted file: " + dst_iter->getPath()));
         } else {  // findDiff()
-            m_text_browser->append(QString::fromStdString("Old folder: " + dst_iter->getPath()));
+            emit signalTextBrowserPrint(QString::fromStdString("Old folder: " + dst_iter->getPath()));
         }
     }
 
@@ -345,8 +366,6 @@ protected:
 
     FolderObj m_src_folder;
     FolderObj m_dst_folder;
-
-    QTextBrowser *m_text_browser;
 
     bool m_W;
 };
