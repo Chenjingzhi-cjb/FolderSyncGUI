@@ -24,6 +24,9 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+private:
+    void slashLeftToRight(QString &str);
+
 private slots:
     void on_src_pushButton_clicked();
 

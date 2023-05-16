@@ -82,7 +82,7 @@ public:
             emit signalTextBrowserPrint(QString::fromStdString("---------------- check succeeded ----------------\n"));
         }
 
-        emit signalTextBrowserPrint(QString::fromStdString("Find diff completed!\n"));
+        emit signalTextBrowserPrint(QString::fromStdString("All check completed!\n"));
     }
 
     /**
@@ -101,7 +101,7 @@ public:
             emit signalTextBrowserPrint(QString::fromStdString("---------------- update succeeded ----------------\n"));
         }
 
-        emit signalTextBrowserPrint(QString::fromStdString("Update completed!\n"));
+        emit signalTextBrowserPrint(QString::fromStdString("All update completed!\n"));
     }
 
 signals:

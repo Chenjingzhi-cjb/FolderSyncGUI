@@ -33,11 +33,26 @@ MainWindow::~MainWindow()
     delete fs;
 }
 
+void MainWindow::slashLeftToRight(QString &str) {
+    QString temp = "";
+
+    for (auto &i : str) {
+        if (i == '/') {
+            temp += '\\';
+        } else {
+            temp += i;
+        }
+    }
+
+    str = std::move(temp);
+}
+
 void MainWindow::on_src_pushButton_clicked()
 {
     m_src_path = QFileDialog::getExistingDirectory(this, "Select source directory", "", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
 
     if (!m_src_path.isEmpty()) {
+        slashLeftToRight(m_src_path);
         QString src_path_display = "\"" + m_src_path + "\"";
         ui->src_lineEdit->setText(src_path_display);
     }
@@ -45,13 +60,13 @@ void MainWindow::on_src_pushButton_clicked()
 
 void MainWindow::on_dst_pushButton_clicked()
 {
-    if(fs->exec()==QDialog::Accepted)
-    {
+    if(fs->exec()==QDialog::Accepted) {
         m_dst_paths = fs->selectedFiles();
 
         if (!m_dst_paths.isEmpty()) {
             QString dst_paths_display = "";
             for (auto &i : m_dst_paths) {
+                slashLeftToRight(i);
                 dst_paths_display += "\"";
                 dst_paths_display += i;
                 dst_paths_display += "\"";
