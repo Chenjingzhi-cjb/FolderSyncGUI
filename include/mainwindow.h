@@ -7,6 +7,7 @@
 #include <QTextCodec>
 #include <string>
 #include <vector>
+#include <thread>
 #include "folders_select.h"
 #include "folder_sync_qt.hpp"
 

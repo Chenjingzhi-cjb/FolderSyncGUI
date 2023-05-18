@@ -11,7 +11,6 @@
 #include <unordered_map>
 #include <algorithm>
 #include <windows.h>
-#include <thread>
 #include <QObject>
 #include <QTextBrowser>
 #include <QString>
@@ -242,7 +241,7 @@ protected:
             }
 
             if (is_operate) {  // update()
-                system(("del \"" + dst_folder.getPath() + dst_file.first + "\"").c_str());
+                DeleteFileW(string2wstring(dst_folder.getPath() + dst_file.first).c_str());
                 emit signalTextBrowserPrint(QString::fromStdString("Deleted file: " + dst_folder.getPath() + dst_file.first));
             } else {  // findDiff()
                emit signalTextBrowserPrint(QString::fromStdString("Old file: " + dst_folder.getPath() + dst_file.first));
@@ -252,7 +251,7 @@ protected:
         // 2. 查找新文件
         for (auto &i : _src_files) {
             if (is_operate) {  // update()
-                system(("copy \"" + src_folder.getPath() + i.first + "\" \"" + dst_folder.getPath() + i.first + "\"").c_str());
+                CopyFileW(string2wstring(src_folder.getPath() + i.first).c_str(), string2wstring(dst_folder.getPath() + i.first).c_str(), FALSE);
                 emit signalTextBrowserPrint(QString::fromStdString("Added file: " + dst_folder.getPath() + i.first));
             } else {  // findDiff()
                 emit signalTextBrowserPrint(QString::fromStdString("New file: " + src_folder.getPath() + i.first));
@@ -304,9 +303,7 @@ protected:
     newFolder(FolderObj &src_folder, FolderObj &dst_folder, std::vector<FolderObj>::iterator &src_iter,
               bool is_operate) {
         if (is_operate) {  // update()
-            system(("md \"" + dst_folder.getPath() + src_iter->getName() + "\"").c_str());
-            system(("xcopy \"" + src_folder.getPath() + src_iter->getName() + "\" \"" + dst_folder.getPath() +
-                    src_iter->getName() + "\"" + "/S /E /Y").c_str());
+            copyFolder(src_folder.getPath() + src_iter->getName() + "\\", dst_folder.getPath() + src_iter->getName() + "\\");
             emit signalTextBrowserPrint(QString::fromStdString("Added folder: " + dst_folder.getPath() + src_iter->getName() + "\\"));
         } else {  // findDiff()
             emit signalTextBrowserPrint(QString::fromStdString("New folder: " + src_iter->getPath()));
@@ -325,7 +322,7 @@ protected:
      */
     inline void oldFolder(FolderObj &dst_folder, std::vector<FolderObj>::iterator &dst_iter, bool is_operate) {
         if (is_operate) {  // update()
-            system(("rd /s /q \"" + dst_folder.getPath() + dst_iter->getName() + "\"").c_str());
+            deleteFolder(dst_folder.getPath() + dst_iter->getName() + "\\");
             emit signalTextBrowserPrint(QString::fromStdString("Deleted file: " + dst_iter->getPath()));
         } else {  // findDiff()
             emit signalTextBrowserPrint(QString::fromStdString("Old folder: " + dst_iter->getPath()));
@@ -358,6 +355,48 @@ protected:
         WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), -1, const_cast<char *>(str.data()), len, nullptr, nullptr);
         str.resize(strlen(str.c_str()));
         return str;
+    }
+
+    static void copyFolder(const std::string &src_folder_path, const std::string &dst_folder_path) {
+        long file_handle;  // 文件句柄
+        struct _finddata_t file_info;  // 文件信息
+
+        CreateDirectoryW(string2wstring(dst_folder_path).c_str(), NULL);
+
+        std::string p;
+        if ((file_handle = _findfirst(p.assign(src_folder_path).append("*").c_str(), &file_info)) != -1) {
+            do {
+                if ((file_info.attrib & _A_SUBDIR)) {  // 表示子文件夹
+                    if (strcmp(file_info.name, ".") != 0 && strcmp(file_info.name, "..") != 0) {
+                        copyFolder(src_folder_path + file_info.name + "\\", dst_folder_path + file_info.name + "\\");
+                    }
+                } else {  // (file_info.attrib & _A_SUBDIR) == 0，表示文件
+                    CopyFileW(string2wstring(src_folder_path + file_info.name).c_str(), string2wstring(dst_folder_path + file_info.name).c_str(), FALSE);
+                }
+            } while (_findnext(file_handle, &file_info) == 0);  // 处理下一个，存在则返回 0，否则返回 -1
+            _findclose(file_handle);
+        }
+    }
+
+    static void deleteFolder(const std::string &folder_path) {
+        long file_handle;  // 文件句柄
+        struct _finddata_t file_info;  // 文件信息
+
+        std::string p;
+        if ((file_handle = _findfirst(p.assign(folder_path).append("*").c_str(), &file_info)) != -1) {
+            do {
+                if ((file_info.attrib & _A_SUBDIR)) {  // 表示子文件夹
+                    if (strcmp(file_info.name, ".") != 0 && strcmp(file_info.name, "..") != 0) {
+                        deleteFolder(folder_path + file_info.name + "\\");
+                    }
+                } else {  // (file_info.attrib & _A_SUBDIR) == 0，表示文件
+                    DeleteFileW(string2wstring(folder_path + file_info.name).c_str());
+                }
+            } while (_findnext(file_handle, &file_info) == 0);  // 处理下一个，存在则返回 0，否则返回 -1
+            _findclose(file_handle);
+        }
+
+        RemoveDirectoryW(string2wstring(folder_path).c_str());
     }
 
 protected:
