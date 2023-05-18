@@ -1,5 +1,5 @@
 <RCC>
     <qresource prefix="/image">
-        <file>Resource/folder_sync_gui.ico</file>
+        <file>resource/folder_sync_gui.ico</file>
     </qresource>
 </RCC>
