@@ -9,7 +9,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    setWindowIcon(QIcon(":/image/resource/folder_sync_gui.ico"));
+    setWindowIcon(QIcon(":/image/resource/icon2.ico"));
 
     connect(&m_folder_sync, &FolderSync::signalTextBrowserPrint, this, &MainWindow::slotTextBrowserPrint);
 
