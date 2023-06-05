@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <thread>
+#include <atomic>
 #include "folders_select.h"
 #include "folder_sync_qt.hpp"
 
@@ -26,6 +27,8 @@ public:
     ~MainWindow();
 
 private:
+    void slotsConnect();
+
     void slashLeftToRight(QString &str);
 
 private slots:
@@ -49,6 +52,7 @@ private:
     QStringList m_dst_paths{};
 
     FolderSync m_folder_sync;
+    std::atomic_bool m_check_flag;  // 保证在执行完“查询”操作后才能执行“更新”操作
 };
 
 

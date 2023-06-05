@@ -18,10 +18,9 @@
 
 class FolderObj {
 public:
-    FolderObj() = default;
-
     explicit FolderObj(std::string path)
             : m_path(std::move(path)) {
+        if (m_path.c_str()[m_path.length() - 1] != '\\') m_path.append("\\");  // FolderObj::m_path 以'\'结尾
         auto _path = m_path.substr(0, m_path.length() - 1);
         auto name_pos = _path.find_last_of('\\');
         m_name = _path.substr(name_pos + 1, _path.length() - 2);
@@ -52,7 +51,9 @@ class FolderSync : public QObject {
     Q_OBJECT
 
 public:
-    FolderSync() = default;
+    FolderSync()
+        : m_src_folder(""),
+          m_dst_folder("") {}
 
     ~FolderSync() = default;
 
@@ -81,6 +82,7 @@ public:
         }
 
         emit signalTextBrowserPrint(QString::fromStdString("All check completed!\n"));
+        emit signalFindDiffCompleted();
     }
 
     /**
@@ -100,10 +102,15 @@ public:
         }
 
         emit signalTextBrowserPrint(QString::fromStdString("All update completed!\n"));
+        emit signalUpdateCompleted();
     }
 
 signals:
     void signalTextBrowserPrint(QString info);
+
+    void signalFindDiffCompleted();
+
+    void signalUpdateCompleted();
 
 protected:
     /**
@@ -112,8 +119,9 @@ protected:
      * @return None
      */
     void initSrcFolder() {
-        // 如果用户输入的目录地址不以'\'结尾，增加'\'结尾，FolderObj::m_path 均以'\'结尾
-        if (m_src_path.c_str()[-1] != '\\') m_src_path.append("\\");
+        // 如果用户输入的目录地址不以'\'结尾，增加'\'结尾
+        // FolderSync::m_path 和 FolderObj::m_path 均以'\'结尾
+        if (m_src_path.c_str()[m_src_path.length() - 1] != '\\') m_src_path.append("\\");
 
         m_src_folder = FolderObj(m_src_path);
 
@@ -129,7 +137,7 @@ protected:
      * @return None
      */
     void initDstFolder(std::string dst_path) {
-        if (dst_path.c_str()[-1] != '\\') dst_path.append("\\");
+        if (dst_path.c_str()[dst_path.length() - 1] != '\\') dst_path.append("\\");
 
         if (m_src_path == dst_path) {
             emit signalTextBrowserPrint(QString::fromStdString("initFolderSync() Error: The source and destination addresses must be different!"));
@@ -288,10 +296,10 @@ protected:
     }
 
     /**
-     * @brief string 转 wstring (gbk)
+     * @brief string 转 wstring (utf-8)
      *
-     * @param str src string (gbk)
-     * @return dst wstring (gbk)
+     * @param str src string (utf-8)
+     * @return dst wstring (utf-8)
      */
     static std::wstring string2wstring(const std::string &str) {
         int len = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, nullptr, 0);
@@ -302,10 +310,10 @@ protected:
     }
 
     /**
-     * @brief wstring 转 string (gbk)
+     * @brief wstring 转 string (utf-8)
      *
-     * @param wstr src wstring (gbk)
-     * @return dst string (gbk)
+     * @param wstr src wstring (utf-8)
+     * @return dst string (utf-8)
      */
     static std::string wstring2string(const std::wstring &wstr) {
         int len = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, nullptr, 0, nullptr, nullptr);
@@ -316,54 +324,54 @@ protected:
     }
 
     static void copyFolderW(const std::wstring &src_folder_path, const std::wstring &dst_folder_path) {
-            HANDLE file_handle;  // 文件句柄
-            WIN32_FIND_DATAW file_info;  // 文件信息
+        HANDLE file_handle;  // 文件句柄
+        WIN32_FIND_DATAW file_info;  // 文件信息
 
-            CreateDirectoryW((dst_folder_path).c_str(), nullptr);
+        CreateDirectoryW((dst_folder_path).c_str(), nullptr);
 
-            std::wstring p;
-            if ((file_handle = FindFirstFileW(p.assign(src_folder_path).append(L"*").c_str(), &file_info)) !=
-                INVALID_HANDLE_VALUE) {
-                do {
-                    if ((file_info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {  // 表示子文件夹
-                        if (wcscmp(file_info.cFileName, L".") != 0 && wcscmp(file_info.cFileName, L"..") != 0) {
-                            copyFolderW(src_folder_path + file_info.cFileName + L"\\",
-                                        dst_folder_path + file_info.cFileName + L"\\");
-                        }
-                    } else {  // (file_info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0，表示文件
-                        CopyFileW((src_folder_path + file_info.cFileName).c_str(),
-                                  (dst_folder_path + file_info.cFileName).c_str(), FALSE);
+        std::wstring p;
+        if ((file_handle = FindFirstFileW(p.assign(src_folder_path).append(L"*").c_str(), &file_info)) !=
+            INVALID_HANDLE_VALUE) {
+            do {
+                if ((file_info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {  // 表示子文件夹
+                    if (wcscmp(file_info.cFileName, L".") != 0 && wcscmp(file_info.cFileName, L"..") != 0) {
+                        copyFolderW(src_folder_path + file_info.cFileName + L"\\",
+                                    dst_folder_path + file_info.cFileName + L"\\");
                     }
-                } while (FindNextFileW(file_handle, &file_info) != 0);  // 处理下一个，存在则返回值不为 0
-                FindClose(file_handle);
-            }
+                } else {  // (file_info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0，表示文件
+                    CopyFileW((src_folder_path + file_info.cFileName).c_str(),
+                                (dst_folder_path + file_info.cFileName).c_str(), FALSE);
+                }
+            } while (FindNextFileW(file_handle, &file_info) != 0);  // 处理下一个，存在则返回值不为 0
+            FindClose(file_handle);
+        }
+    }
+
+    static void deleteFolderW(const std::wstring &folder_path) {
+        HANDLE file_handle;  // 文件句柄
+        WIN32_FIND_DATAW file_info;  // 文件信息
+
+        std::wstring p;
+        if ((file_handle = FindFirstFileW(p.assign(folder_path).append(L"*").c_str(), &file_info)) !=
+            INVALID_HANDLE_VALUE) {
+            do {
+                if ((file_info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {  // 表示子文件夹
+                    if (wcscmp(file_info.cFileName, L".") != 0 && wcscmp(file_info.cFileName, L"..") != 0) {
+                        deleteFolderW(folder_path + file_info.cFileName + L"\\");
+                    }
+                } else {  // (file_info.attrib & _A_SUBDIR) == 0，表示文件
+                    DeleteFileW((folder_path + file_info.cFileName).c_str());
+                }
+            } while (FindNextFileW(file_handle, &file_info) != 0);  // 处理下一个，存在则返回值不为 0
+            FindClose(file_handle);
         }
 
-        static void deleteFolderW(const std::wstring &folder_path) {
-            HANDLE file_handle;  // 文件句柄
-            WIN32_FIND_DATAW file_info;  // 文件信息
-
-            std::wstring p;
-            if ((file_handle = FindFirstFileW(p.assign(folder_path).append(L"*").c_str(), &file_info)) !=
-                INVALID_HANDLE_VALUE) {
-                do {
-                    if ((file_info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {  // 表示子文件夹
-                        if (wcscmp(file_info.cFileName, L".") != 0 && wcscmp(file_info.cFileName, L"..") != 0) {
-                            deleteFolderW(folder_path + file_info.cFileName + L"\\");
-                        }
-                    } else {  // (file_info.attrib & _A_SUBDIR) == 0，表示文件
-                        DeleteFileW((folder_path + file_info.cFileName).c_str());
-                    }
-                } while (FindNextFileW(file_handle, &file_info) != 0);  // 处理下一个，存在则返回值不为 0
-                FindClose(file_handle);
-            }
-
-            RemoveDirectoryW((folder_path).c_str());
-        }
+        RemoveDirectoryW((folder_path).c_str());
+    }
 
 protected:
-    std::string m_src_path;
-    std::vector<std::string> m_dst_paths;
+    std::string m_src_path{};
+    std::vector<std::string> m_dst_paths{};
 
     FolderObj m_src_folder;
     FolderObj m_dst_folder;
