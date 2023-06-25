@@ -26,3 +26,11 @@
 - 更新后文件夹状态
 
 [![p9zZbdO.png](https://s1.ax1x.com/2023/06/01/p9zZbdO.png)](https://imgse.com/i/p9zZbdO)
+
+
+
+## 环境
+
+MinGW 64-bit
+
+eyoC7lkQXBwSWQ9e3tGOUQ3OUIyNi1CREE5LTQ5QzctOEM5OC00MjZDMEFFNENDMzl9qoHRWqz
