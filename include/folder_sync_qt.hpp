@@ -72,13 +72,13 @@ public:
      */
     void findDiff() {
         for (const auto &dst_path : m_dst_paths) {
-            initDstFolder(dst_path);
+            if (initDstFolder(dst_path)) {
+                emit signalTextBrowserPrint(QString::fromStdString("-------- dst path: " + dst_path + " --------"));
 
-            emit signalTextBrowserPrint(QString::fromStdString("-------- dst path: " + dst_path + " --------"));
+                findFilesDiff(m_src_folder, m_dst_folder, false);
 
-            findFilesDiff(m_src_folder, m_dst_folder, false);
-
-            emit signalTextBrowserPrint(QString::fromStdString("---------------- check succeeded ----------------\n"));
+                emit signalTextBrowserPrint(QString::fromStdString("---------------- check succeeded ----------------\n"));
+            }
         }
 
         emit signalTextBrowserPrint(QString::fromStdString("All check completed!\n"));
@@ -92,13 +92,13 @@ public:
      */
     void update() {
         for (const auto &dst_path : m_dst_paths) {
-            initDstFolder(dst_path);
+            if (initDstFolder(dst_path)) {
+                emit signalTextBrowserPrint(QString::fromStdString("-------- dst path: " + dst_path + " --------"));
 
-            emit signalTextBrowserPrint(QString::fromStdString("-------- dst path: " + dst_path + " --------"));
+                findFilesDiff(m_src_folder, m_dst_folder, true);
 
-            findFilesDiff(m_src_folder, m_dst_folder, true);
-
-            emit signalTextBrowserPrint(QString::fromStdString("---------------- update succeeded ----------------\n"));
+                emit signalTextBrowserPrint(QString::fromStdString("---------------- update succeeded ----------------\n"));
+            }
         }
 
         emit signalTextBrowserPrint(QString::fromStdString("All update completed!\n"));
@@ -134,19 +134,22 @@ protected:
      * @brief 初始化 目标文件夹对象
      *
      * @param dst_path 目标文件路径
-     * @return None
+     * @return init status
      */
-    void initDstFolder(std::string dst_path) {
+    bool initDstFolder(std::string dst_path) {
         if (dst_path.c_str()[dst_path.length() - 1] != '\\') dst_path.append("\\");
 
         if (m_src_path == dst_path) {
             emit signalTextBrowserPrint(QString::fromStdString("initFolderSync() Error: The source and destination addresses must be different!"));
             emit signalTextBrowserPrint(QString::fromStdString("    error folder: " + dst_path + "\n"));
+            return false;
         }
 
         m_dst_folder = FolderObj(dst_path);
 
         buildFolderTreeW(m_dst_folder);
+
+        return true;
     }
 
     /**
