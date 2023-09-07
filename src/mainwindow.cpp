@@ -118,4 +118,3 @@ void MainWindow::on_update_pushButton_clicked() {
 void MainWindow::slotTextBrowserPrint(QString info) {
     ui->output_textBrowser->append(info);
 }
-

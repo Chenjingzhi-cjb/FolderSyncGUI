@@ -2,12 +2,8 @@
 
 
 FoldersSelect::FoldersSelect(QWidget *parent)
-    : QFileDialog(parent)
-{
+    : QFileDialog(parent) {}
 
-}
-
-void FoldersSelect::go()
-{
+void FoldersSelect::go() {
     QDialog::accept();
 }

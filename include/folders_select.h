@@ -8,14 +8,11 @@
 #include <QDialogButtonBox>
 
 
-class FoldersSelect :public QFileDialog
-{
+class FoldersSelect :public QFileDialog {
     Q_OBJECT
 
 public:
     explicit FoldersSelect(QWidget *parent = 0);
-
-signals:
 
 public slots:
     void go();
