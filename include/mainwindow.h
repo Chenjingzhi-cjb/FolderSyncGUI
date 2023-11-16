@@ -50,7 +50,7 @@ private:
 
     QString m_src_path{};
 
-    QStringList m_dst_paths{};
+    QString m_dst_path{};
 
     FolderSync m_folder_sync;
     std::atomic_bool m_check_flag;  // 保证在执行完“查询”操作后才能执行“更新”操作
