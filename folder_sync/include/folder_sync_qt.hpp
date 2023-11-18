@@ -1,19 +1,20 @@
 #ifndef QT_FOLDER_SYNC_HPP
 #define QT_FOLDER_SYNC_HPP
 
+#include <QObject>
+#include <QTextBrowser>
+#include <QString>
+
+#include <windows.h>
 #include <stdexcept>
 #include <iostream>
 #include <fstream>
 #include <io.h>
 #include <string>
-#include <utility>
 #include <vector>
 #include <unordered_map>
+#include <utility>
 #include <algorithm>
-#include <windows.h>
-#include <QObject>
-#include <QTextBrowser>
-#include <QString>
 
 
 class FolderObj {

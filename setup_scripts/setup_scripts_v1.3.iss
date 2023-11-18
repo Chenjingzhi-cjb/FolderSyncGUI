@@ -20,12 +20,12 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppName}
 DisableProgramGroupPage=yes
-LicenseFile=D:\001_Project\FolderSyncGUI\FolderSyncGUI\LICENSE
+LicenseFile=..\..\FolderSyncGUI\LICENSE
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
-OutputDir=D:\001_Project\FolderSyncGUI\setup
+OutputDir=.
 OutputBaseFilename=setup_v1.3
-SetupIconFile=D:\001_Project\FolderSyncGUI\FolderSyncGUI\resource\icon2.ico
+SetupIconFile=..\..\FolderSyncGUI\resource\icon2.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -37,8 +37,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "D:\001_Project\FolderSyncGUI\release_bin\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "D:\001_Project\FolderSyncGUI\release_bin\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\release_bin\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\release_bin\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]

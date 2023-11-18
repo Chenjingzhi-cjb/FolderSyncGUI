@@ -11,20 +11,19 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 INCLUDEPATH += \
-    include/
+    folder_sync/include/ \
+    mainwindow/
 
 SOURCES += \
-    src/folders_select.cpp \
-    src/main.cpp \
-    src/mainwindow.cpp
+    mainwindow/mainwindow.cpp \
+    main.cpp
 
 HEADERS += \
-    include/folder_sync_qt.hpp \
-    include/folders_select.h \
-    include/mainwindow.h
+    folder_sync/include/folder_sync_qt.hpp \
+    mainwindow/mainwindow.h
 
 FORMS += \
-    mainwindow.ui
+    mainwindow/mainwindow.ui
 
 CONFIG += lrelease
 CONFIG += embed_translations

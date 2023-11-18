@@ -5,7 +5,6 @@
 MainWindow::MainWindow(QWidget *parent)
         : QMainWindow(parent),
           ui(new Ui::MainWindow),
-          fs(new FoldersSelect),
           m_check_flag(false) {
     ui->setupUi(this);
 
@@ -16,7 +15,6 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow() {
     delete ui;
-    delete fs;
 }
 
 void MainWindow::slotsConnect() {
@@ -58,7 +56,7 @@ void MainWindow::on_src_pushButton_clicked() {
 }
 
 void MainWindow::on_dst_pushButton_clicked() {
-    m_dst_path = QFileDialog::getExistingDirectory(this, "Select source directory", "", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    m_dst_path = QFileDialog::getExistingDirectory(this, "Select destination directory", "", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
 
     if(!m_dst_path.isEmpty()) {
         m_check_flag.store(false);

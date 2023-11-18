@@ -5,17 +5,18 @@
 #include <QApplication>
 #include <QFileDialog>
 #include <QTextCodec>
+
 #include <string>
 #include <vector>
 #include <thread>
 #include <atomic>
-#include "folders_select.h"
+
 #include "folder_sync_qt.hpp"
 
 
 QT_BEGIN_NAMESPACE
 
-    namespace Ui { class MainWindow; }
+namespace Ui { class MainWindow; }
 
 QT_END_NAMESPACE
 
@@ -45,8 +46,6 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-
-    FoldersSelect *fs;
 
     QString m_src_path{};
 
