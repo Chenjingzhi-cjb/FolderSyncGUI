@@ -31,6 +31,6 @@
 
 ## 环境
 
-MinGW 64-bit
+编译环境：MinGW 64-bit
 
-eyoC7lkQXBwSWQ9e3tGOUQ3OUIyNi1CREE5LTQ5QzctOEM5OC00MjZDMEFFNENDMzl9qoHRWqz
+Release 构建环境：QT5
